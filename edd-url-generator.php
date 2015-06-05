@@ -361,11 +361,11 @@ class EDD_URL_Generator {
 
 		//* Custom discounts dropdown (adds blank option)
 		$output = EDD()->html->select( array(
-			'name'             => 'edd_url_generator_discounts',
-			'selected'         => -1,
-			'options'          => $options,
-			'show_option_all'  => false,
-			'show_option_none' => ' '
+			'name'				=> 'edd_url_generator_discounts',
+			'selected'			=> -1,
+			'options'			=> $options,
+			'show_option_all'	=> false,
+			'show_option_none'	=> ' '
 		) );
 
 		return $output;
@@ -378,8 +378,10 @@ class EDD_URL_Generator {
 
 		$args = array(
 
-			'post_type' => 'page',
-			'nopaging' => true
+			'post_type'		=> 'page',
+			'orderby'		=> 'title',
+			'orer'			=> 'ASC',
+			'nopaging'		=> true
 
 		);
 
@@ -395,11 +397,11 @@ class EDD_URL_Generator {
 
 		//* Custom discounts dropdown (adds blank option)
 		$output = EDD()->html->select( array(
-			'name'             => 'edd_url_generator_pages',
-			'selected'         => -1,
-			'options'          => $options,
-			'show_option_all'  => false,
-			'show_option_none' => ' '
+			'name'				=> 'edd_url_generator_pages',
+			'selected'			=> -1,
+			'options'			=> $options,
+			'show_option_all'	=> false,
+			'show_option_none'	=> ' '
 		) );
 
 		return $output;
