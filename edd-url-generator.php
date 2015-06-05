@@ -96,7 +96,6 @@ class EDD_URL_Generator {
 		add_action( 'edd_tools_tab_url_generator', array( $this, 'tab_content' ) );
 
 		add_action( 'edd_tools_url_generator_after', array( $this, 'display_url' ) );
-
 	}
 
 	/**
@@ -175,7 +174,7 @@ class EDD_URL_Generator {
 
 					<?php if ( $this->is_affwp_active() ) : ?>
 
-					<?php _e( 'Select an affiliate to receive an affiliate commission.', 'edd' ); ?>
+					<?php _e( 'Select an affiliate to credit with a referral.', 'edd' ); ?>
 						<br/><?php echo $this->affiliates_dropdown(); ?>
 					</p>
 
@@ -208,11 +207,11 @@ class EDD_URL_Generator {
 		if ( isset( $_POST['edd_url_generator_products'] ) && intval( $_POST['edd_url_generator_products'] ) !== -1 )
 			$download_id = absint( $_POST['edd_url_generator_products'] );
 
-		//* Get the discount
+		//* Get the Discount
 		if ( isset( $_POST['edd_url_generator_discounts'] ) && intval( $_POST['edd_url_generator_discounts'] ) !== -1 )
 			$discount_code = edd_get_discount_code( absint( $_POST['edd_url_generator_discounts'] ) );
 
-		//* Get the download's price ID (variable pricing only)
+		//* Get the Download's price ID (variable pricing only)
 		if ( isset( $_POST['edd_url_generator_price_id'] ) )
 			$price_id = absint( $_POST['edd_url_generator_price_id'] );
 
@@ -263,7 +262,6 @@ class EDD_URL_Generator {
 				), $redirect_page );
 
 			}
-
 		}
 
 		//* Download is set
@@ -294,7 +292,6 @@ class EDD_URL_Generator {
 				), $redirect_page );
 
 			}
-
 		}
 
 		//* Discount is set
@@ -305,7 +302,6 @@ class EDD_URL_Generator {
 				'discount' => $discount_code
 
 			), $redirect_page );
-
 		}
 
 		?>
@@ -414,7 +410,7 @@ class EDD_URL_Generator {
 	 */
 	public function affiliates_dropdown() {
 
-		if ( ! $this->is_affwp_active() ) return false;
+		if ( ! $this->is_affwp_active() ) return;
 
 		$users = get_users();
 
@@ -451,7 +447,6 @@ class EDD_URL_Generator {
 	 *	Get AffiliateWP options
 	 */
 	public function get_affwp_options() {
-
 		return get_option( 'affwp_settings' );
 	}
 }
