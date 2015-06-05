@@ -133,8 +133,7 @@ class EDD_URL_Generator {
 	 */
 	public function tab_content() {
 
-		if ( ! current_user_can( 'manage_shop_settings' ) )
-			return;
+		if ( ! current_user_can( 'manage_shop_settings' ) ) return;
 
 		do_action( 'edd_tools_url_generator_before' );
 
@@ -163,7 +162,7 @@ class EDD_URL_Generator {
 					</p>
 
 					<?php printf( '<p>%s <strong>%s</strong>', __( 'If the Download has variable pricing enabled, enter the price ID of the version to add', 'edd' ), __( '(defaults to 1).', 'edd' ) ); ?>
-						<br/><input type="number" name="edd_url_generator_price_id" min="1" max="99">
+						<br/><input type="number" name="edd_url_generator_price_id" min="1" max="99" style="width: 100px;">
 					</p>
 
 					<p><?php _e( 'Select a Discount to be applied.', 'edd' ); ?>
@@ -173,6 +172,14 @@ class EDD_URL_Generator {
 					<?php printf( '<p>%s <strong>%s</strong>', __( 'Select a Page to redirect the customer to', 'edd' ), __( '(defaults to Checkout page).', 'edd' ) ); ?>
 						<br/><?php echo $this->pages_dropdown(); ?>
 					</p>
+
+					<?php if ( $this->is_affwp_active() ) : ?>
+
+					<?php _e( 'Select an affiliate to receive an affiliate commission.', 'edd' ); ?>
+						<br/><?php echo $this->affiliates_dropdown(); ?>
+					</p>
+
+					<?php endif; ?>
 
 					<p>
 						<input type="hidden" name="edd_action" value="edd_url_generator_nonce" />
@@ -214,10 +221,52 @@ class EDD_URL_Generator {
 			$redirect_page = get_permalink( absint( $_POST['edd_url_generator_pages'] ) );
 		} else $redirect_page = get_permalink( edd_get_option( 'purchase_page' ) );
 
-		//* Bail if neither the download nor discount are set
-		if ( ! $download_id && ! $discount_code  ) return;
+		//* Get the affiliate ID
+		if ( isset( $_POST['edd_url_generator_affiliates'] ) && intval( $_POST['edd_url_generator_affiliates'] ) !== -1 )
+			$affiliate_id = absint( $_POST['edd_url_generator_affiliates'] );
 
-		//* Download set
+		//* Bail if neither the download, discount nor affiliate IDs are set
+		if ( ! $download_id && ! $discount_code && ! $affiliate_id  ) return;
+
+		//* Affiliate is set
+		if ( $affiliate_id ) {
+
+			if ( ! $this->is_affwp_active() ) return;
+
+			$affwp_settings = $this->get_affwp_options();
+
+			$affwp_settings = $this->get_affwp_options();
+
+			$referral_format = $affwp_settings['referral_format'];
+
+			$referral_var = $affwp_settings['referral_var'];
+
+			$referral_pretty_urls = $affwp_settings['referral_pretty_urls'];
+
+			// Put together the affiliate's identifier
+			if ( $referral_format == 'username' ) {
+				$referrer = affwp_get_affiliate_username( $affiliate_id );
+			} else $referrer = $affiliate_id;
+
+			// Add the referrer's ID to the URL for affiliate credit
+			if ( intval( $referral_pretty_urls ) === 1 ) {
+
+				// Using pretty URLs
+				$redirect_page .= trailingslashit( $referral_var . '/' . urlencode( $referrer ) );
+
+			} else {
+
+				$redirect_page = add_query_arg( array(
+
+					$referral_var => $referrer
+
+				), $redirect_page );
+
+			}
+
+		}
+
+		//* Download is set
 		if ( $download_id ) {
 
 			$redirect_page = add_query_arg( array(
@@ -227,8 +276,8 @@ class EDD_URL_Generator {
 
 			), $redirect_page );
 
-			//* Price ID set
-			if ( $price_id ) {
+			// Price ID is set
+			if ( $price_id && edd_has_variable_prices( $download_id ) ) {
 
 				$redirect_page = add_query_arg( array(
 
@@ -248,7 +297,7 @@ class EDD_URL_Generator {
 
 		}
 
-		//* Discount set
+		//* Discount is set
 		if ( $discount_code ) {
 
 			$redirect_page = add_query_arg( array(
@@ -291,7 +340,14 @@ class EDD_URL_Generator {
 	}
 
 	/**
-	 *	Retrieve registered discounts and returns a dropdown with discounts as options
+	 *	Check if AffiliateWP is active
+	 */
+	public function is_affwp_active() {
+		return is_plugin_active( 'AffiliateWP/affiliate-wp.php' );
+	}
+
+	/**
+	 *	Retrieves registered discounts and returns a dropdown with discounts as options
 	 */
 	public function discounts_dropdown() {
 
@@ -320,7 +376,7 @@ class EDD_URL_Generator {
 	}
 
 	/**
-	 *	Retrieve pages and returns a dropdown with pages as options
+	 *	Retrieves pages and returns a dropdown with pages as options
 	 */
 	public function pages_dropdown() {
 
@@ -351,6 +407,52 @@ class EDD_URL_Generator {
 		) );
 
 		return $output;
+	}
+
+	/**
+	 *	Retrieves affiliates and returns a dropdown with affiliates as options
+	 */
+	public function affiliates_dropdown() {
+
+		if ( ! $this->is_affwp_active() ) return false;
+
+		$users = get_users();
+
+		$options = array();
+
+		if ( $users ) {
+
+			foreach ( $users as $user ) {
+
+				if ( affwp_is_affiliate( $user->ID ) && affwp_is_active_affiliate( affwp_get_affiliate_id( $user->ID ) ) ) {
+
+					$options[ absint( affwp_get_affiliate_id( $user->ID ) ) ] = $user->first_name . ' ' . $user->last_name . ' (' . $user->user_email . ')';
+				}
+			}
+		}
+
+		else $options[0] = __( 'No affiliates found', 'edd' );
+
+		//* Custom discounts dropdown (adds blank option)
+		$output = EDD()->html->select( array(
+			'name'				=> 'edd_url_generator_affiliates',
+			'placeholder'		=> __( 'Select an affiliate' ),
+			'selected'			=> -1,
+			'options'			=> $options,
+			'chosen'			=> true,
+			'show_option_all'	=> false,
+			'show_option_none'	=> ' '
+		) );
+
+		return $output;
+	}
+
+	/**
+	 *	Get AffiliateWP options
+	 */
+	public function get_affwp_options() {
+
+		return get_option( 'affwp_settings' );
 	}
 }
 
