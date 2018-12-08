@@ -1,12 +1,11 @@
 === EDD URL Generator ===
 
-Contributors: EngageWP
+Contributors: renventura
 Tags: Easy Digital Downloads, Discounts, Coupons, URL
-Tested up to: 4.2.2
+Tested up to: 5.0.0
 Stable tag: 1.0
 License: GPL 2.0+
 License URI: http://www.opensource.org/licenses/gpl-license.php
-Donate link: http://www.engagewp.com/donate/
 
 EDD store managers and admins can generate URLs for adding downloads to a customer's cart, applying a discount, and redirecting to any page.
 

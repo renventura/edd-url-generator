@@ -1,18 +1,18 @@
 <?php
 /**
  * Plugin Name: EDD URL Generator
- * Plugin URI: http://www.engagewp.com/
+ * Plugin URI: https://renventura.com
  * Description: EDD store managers and admins can generate URLs for adding downloads to a customer's cart, applying a discount, and redirecting to any page.
  * Version: 1.0
  * Author: Ren Ventura
- * Author URI: http://www.engagewp.com/
+ * Author URI: https://renventura.com
  *
  * License: GPL 2.0+
  * License URI: http://www.opensource.org/licenses/gpl-license.php
  */
 
  /*
-	Copyright 2015  Ren Ventura, EngageWP.com
+	Copyright 2015  Ren Ventura <renventura.com>
 
 	This program is free software; you can redistribute it and/or modify
 	it under the terms of the GNU General Public License, version 2, as
@@ -62,26 +62,29 @@ class EDD_URL_Generator {
 
 	public function setup_constants() {
 
-		if ( ! defined( 'EDD_URL_GENERATOR_PLUGIN_DIR' ) )
+		if ( ! defined( 'EDD_URL_GENERATOR_PLUGIN_DIR' ) ) {
 			define( 'EDD_URL_GENERATOR_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+		}
 
-		if ( ! defined( 'EDD_URL_GENERATOR_PLUGIN_URL' ) )
+		if ( ! defined( 'EDD_URL_GENERATOR_PLUGIN_URL' ) ) {
 			define( 'EDD_URL_GENERATOR_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+		}
 
-		if ( ! defined( 'EDD_URL_GENERATOR_PLUGIN_FILE' ) )
+		if ( ! defined( 'EDD_URL_GENERATOR_PLUGIN_FILE' ) ) {
 			define( 'EDD_URL_GENERATOR_PLUGIN_FILE', __FILE__ );
+		}
 
-		if ( ! defined( 'EDD_URL_GENERATOR_VERSION' ) )
+		if ( ! defined( 'EDD_URL_GENERATOR_VERSION' ) ) {
 			define( 'EDD_URL_GENERATOR_VERSION', 1.0 );
+		}
 	}
 
 	/**
 	 *	Include all PHP files
 	 */
 	public function includes() {
-
-		foreach ( glob( EDD_URL_GENERATOR_PLUGIN_DIR . '/lib/*.php' ) as $file )
-			include_once $file;
+		include_once 'includes/functions.php';
+		include_once 'includes/shortcodes.php';
 	}
 
 	/**
@@ -121,9 +124,7 @@ class EDD_URL_Generator {
 	 *	@return array $tabs New tools tabs
 	 */
 	public function new_tab( $tabs ) {
-
 		$tabs['url_generator'] = __( 'URL Generator', 'edd' );
-
 		return $tabs;
 	}
 
@@ -132,7 +133,9 @@ class EDD_URL_Generator {
 	 */
 	public function tab_content() {
 
-		if ( ! current_user_can( 'manage_shop_settings' ) ) return;
+		if ( ! current_user_can( 'manage_shop_settings' ) ) {
+			return;
+		}
 
 		do_action( 'edd_tools_url_generator_before' );
 
@@ -204,33 +207,43 @@ class EDD_URL_Generator {
 	public function display_url() {
 
 		//* Get the Download ID
-		if ( isset( $_POST['edd_url_generator_products'] ) && intval( $_POST['edd_url_generator_products'] ) !== -1 )
+		if ( isset( $_POST['edd_url_generator_products'] ) && intval( $_POST['edd_url_generator_products'] ) !== -1 ) {
 			$download_id = absint( $_POST['edd_url_generator_products'] );
+		}
 
 		//* Get the Discount
-		if ( isset( $_POST['edd_url_generator_discounts'] ) && intval( $_POST['edd_url_generator_discounts'] ) !== -1 )
+		if ( isset( $_POST['edd_url_generator_discounts'] ) && intval( $_POST['edd_url_generator_discounts'] ) !== -1 ) {
 			$discount_code = edd_get_discount_code( absint( $_POST['edd_url_generator_discounts'] ) );
+		}
 
 		//* Get the Download's price ID (variable pricing only)
-		if ( isset( $_POST['edd_url_generator_price_id'] ) )
+		if ( isset( $_POST['edd_url_generator_price_id'] ) ) {
 			$price_id = absint( $_POST['edd_url_generator_price_id'] );
+		}
 
 		//* Set the redirect page
 		if ( isset( $_POST['edd_url_generator_pages'] ) && intval( $_POST['edd_url_generator_pages'] ) !== -1 ) {
 			$redirect_page = get_permalink( absint( $_POST['edd_url_generator_pages'] ) );
-		} else $redirect_page = get_permalink( edd_get_option( 'purchase_page' ) );
+		} else {
+			$redirect_page = get_permalink( edd_get_option( 'purchase_page' ) );
+		}
 
 		//* Get the affiliate ID
-		if ( isset( $_POST['edd_url_generator_affiliates'] ) && intval( $_POST['edd_url_generator_affiliates'] ) !== -1 )
+		if ( isset( $_POST['edd_url_generator_affiliates'] ) && intval( $_POST['edd_url_generator_affiliates'] ) !== -1 ) {
 			$affiliate_id = absint( $_POST['edd_url_generator_affiliates'] );
+		}
 
 		//* Bail if neither the download, discount nor affiliate IDs are set
-		if ( ! $download_id && ! $discount_code && ! $affiliate_id  ) return;
+		if ( ! isset( $download_id ) && ! isset( $discount_code ) && ! isset( $affiliate_id )  ) {
+			return;
+		}
 
 		//* Affiliate is set
-		if ( $affiliate_id ) {
+		if ( isset( $affiliate_id ) && $affiliate_id ) {
 
-			if ( ! $this->is_affwp_active() ) return;
+			if ( ! $this->is_affwp_active() ) {
+				return;
+			}
 
 			$affwp_settings = $this->get_affwp_options();
 
@@ -265,7 +278,7 @@ class EDD_URL_Generator {
 		}
 
 		//* Download is set
-		if ( $download_id ) {
+		if ( isset( $download_id ) && $download_id ) {
 
 			$redirect_page = add_query_arg( array(
 
@@ -295,7 +308,7 @@ class EDD_URL_Generator {
 		}
 
 		//* Discount is set
-		if ( $discount_code ) {
+		if ( isset( $discount_code ) && $discount_code ) {
 
 			$redirect_page = add_query_arg( array(
 
@@ -314,11 +327,15 @@ class EDD_URL_Generator {
 
 				<p><strong><?php _e( 'Raw URL', 'edd' ) ?></strong></p>
 
-				<p><?php echo $redirect_page; ?></p>
+				<p>
+					<input type="text" class="large-text" disabled="disabled" value="<?php echo $redirect_page; ?>">
+				</p>
 
 				<p><strong><?php _e( 'Shortcode', 'edd' ) ?></strong></p>
 
-				<p>[edd_url_generator_link url="<?php echo $redirect_page; ?>" class="button" target="_blank" text="Buy Now"]</p>
+				<p>
+					<?php printf( '[edd_url_generator_link url="%s" class="button" target="_blank" text="Buy Now"]', $redirect_page ); ?>
+				</p>
 
 				<p><em><?php _e( '* When using the shortcode, you can change the class, target and text attributes as you wish.', 'edd' ) ?></em></p>
 
@@ -353,11 +370,13 @@ class EDD_URL_Generator {
 
 		$options = array();
 
-		if ( $discounts )
-			foreach ( $discounts as $discount )
+		if ( $discounts ) {
+			foreach ( $discounts as $discount ) {
 				$options[ absint( $discount->ID ) ] = esc_html( get_the_title( $discount->ID ) );
-
-		else $options[0] = __( 'No discounts found', 'edd' );
+			}
+		} else {
+			$options[0] = __( 'No discounts found', 'edd' );
+		}
 
 		//* Custom discounts dropdown (adds blank option)
 		$output = EDD()->html->select( array(
@@ -389,11 +408,13 @@ class EDD_URL_Generator {
 
 		$options = array();
 
-		if ( $pages )
-			foreach ( $pages as $page )
+		if ( $pages ) {
+			foreach ( $pages as $page ) {
 				$options[ absint( $page->ID ) ] = esc_html( get_the_title( $page->ID ) );
-
-		else $options[0] = __( 'No pages found', 'edd' );
+			}
+		} else {
+			$options[0] = __( 'No pages found', 'edd' );
+		}
 
 		//* Custom discounts dropdown (adds blank option)
 		$output = EDD()->html->select( array(
@@ -427,9 +448,10 @@ class EDD_URL_Generator {
 					$options[ absint( affwp_get_affiliate_id( $user->ID ) ) ] = $user->first_name . ' ' . $user->last_name . ' (' . $user->user_email . ')';
 				}
 			}
-		}
 
-		else $options[0] = __( 'No affiliates found', 'edd' );
+		} else {
+			$options[0] = __( 'No affiliates found', 'edd' );
+		}
 
 		//* Custom discounts dropdown (adds blank option)
 		$output = EDD()->html->select( array(
